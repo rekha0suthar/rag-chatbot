@@ -17,7 +17,7 @@ export const chat = async (req, res) => {
     const prompt = `Use the following context to answer the user's question.\n\nContext:\n${context}\n\nUser: ${userMessage}`;
 
     const model = genAI.getGenerativeModel({
-      model: 'models/gemini-pro',
+      model: 'models/gemini-1.5-flash',
     });
     const result = await model.generateContent(prompt);
     console.log(result);

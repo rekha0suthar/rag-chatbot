@@ -1,35 +1,30 @@
-import axios from 'axios';
 import { QdrantClient } from '@qdrant/js-client-rest';
+import axios from 'axios';
 
-const qdrant = new QdrantClient(process.env.QDRANT_URL);
+const qdrant = new QdrantClient({ url: process.env.QDRANT_URL });
 
-const getEmbeddings = async (text) => {
+export async function getEmbedding(text) {
   const response = await axios.post(
     'https://api.jina.ai/v1/embeddings',
-    { input: [text] },
-    { headers: { Authorization: `Bearer ${process.env.JINA_API_KEY}` } }
-  );
-  return response.data.data[0].embedding;
-};
-
-const retrieveContext = async (queryEmbedding) => {
-  const search = await qdrant.search('news_articles', {
-    vectors: queryEmbedding,
-    top: 5,
-  });
-  return search.map((hit) => hit.payload.content);
-};
-
-const askGemini = async (prompt) => {
-  const response = await axios.post(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' +
-      process.env.GEMINI_API_KEY,
     {
-      contents: [{ parts: [{ text: prompt }] }],
+      input: [text],
+      model: 'jina-embeddings-v2-base-en',
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.JINA_API_KEY}`,
+      },
     }
   );
-  return response.data.candidates[0].content.parts[0].text;
-};
-{
+  return response.data.data[0].embedding;
 }
-export { getEmbeddings, retrieveContext, askGemini };
+
+// RAG context retrieval
+export async function getRelevantContext(queryText) {
+  const queryEmbedding = await getEmbedding(queryText);
+  const result = await qdrant.search('news_articles', {
+    vector: queryEmbedding,
+    top: 5,
+  });
+  return result.map((r) => r.payload.content).join('\n');
+}

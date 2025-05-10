@@ -8,6 +8,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const chatEndRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function initSession() {
@@ -31,19 +32,40 @@ export default function App() {
   const sendMessage = async () => {
     if (!input.trim()) return;
     const userMsg = input;
+
     setMessages((msgs) => [...msgs, { role: 'user', message: userMsg }]);
     setInput('');
+    setLoading(true);
 
-    const res = await axios.post(`${API_BASE}/chat`, {
-      sessionId,
-      userMessage: userMsg,
-    });
-
+    // Show loading message
     setMessages((msgs) => [
       ...msgs,
       { role: 'user', message: userMsg },
-      { role: 'bot', message: res.data.reply },
+      { role: 'bot', message: 'Thinking... 🤔' },
     ]);
+
+    try {
+      const res = await axios.post(`${API_BASE}/chat`, {
+        sessionId,
+        userMessage: userMsg,
+      });
+
+      setMessages((msgs) => [
+        ...msgs.slice(0, -1), // remove loading
+        { role: 'bot', message: res.data.reply },
+      ]);
+    } catch (err) {
+      console.error('API Error:', err);
+      setMessages((msgs) => [
+        ...msgs.slice(0, -1), // remove loading
+        {
+          role: 'bot',
+          message: '⚠️ I couldn’t fetch a response. Please try again later.',
+        },
+      ]);
+    }
+
+    setLoading(false);
   };
 
   return (

@@ -12,9 +12,15 @@ export default function App() {
 
   useEffect(() => {
     async function initSession() {
-      const res = await axios.post(`${API_BASE}/session`);
-      setSessionId(res.data.sessionId);
+      try {
+        await axios.get(`${API_BASE}/ingest-news`); // ✅ trigger ingestion
+        const res = await axios.post(`${API_BASE}/session`);
+        setSessionId(res.data.sessionId);
+      } catch (err) {
+        console.error('Initialization error:', err);
+      }
     }
+
     initSession();
   }, []);
 

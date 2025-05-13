@@ -20,7 +20,6 @@ export const chat = async (req, res) => {
       model: 'models/gemini-1.5-flash',
     });
     const result = await model.generateContent(prompt);
-    console.log(result);
     const botReply = result.response.text();
 
     const updatedHistory = [

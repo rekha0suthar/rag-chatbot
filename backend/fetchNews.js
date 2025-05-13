@@ -6,14 +6,13 @@ dotenv.config();
 
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 const QDRANT_URL = process.env.QDRANT_URL;
+const QDRANT_API_KEY = process.env.QDRANT_API_KEY;
+const JINA_API_KEY = process.env.JINA_API_KEY;
 
-const qdrant = new QdrantClient({ url: QDRANT_URL });
-
-await qdrant.createCollection('news_articles', {
-  vectors: {
-    size: 768, // Or 384, depending on your embedding model size
-    distance: 'Cosine', // or 'Dot' or 'Euclid'
-  },
+const qdrant = new QdrantClient({
+  url: QDRANT_URL,
+  apiKey: QDRANT_API_KEY,
+  config: { checkCompatibility: false },
 });
 
 async function fetchNewsArticles() {
@@ -44,11 +43,11 @@ async function getEmbedding(text) {
       'https://api.jina.ai/v1/embeddings',
       {
         input: [text],
-        model: 'jina-embeddings-v2-base-en', // ✅ required
+        model: 'jina-embeddings-v2-base-en',
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.JINA_API_KEY}`,
+          Authorization: `Bearer ${JINA_API_KEY}`,
         },
       }
     );
@@ -59,7 +58,10 @@ async function getEmbedding(text) {
   }
 }
 
-async function storeArticles(articles) {
+export async function ingestNewsArticles() {
+  const articles = await fetchNewsArticles();
+  if (!articles.length) return;
+
   const existingCollections = await qdrant.getCollections();
   const alreadyExists = existingCollections.collections.some(
     (col) => col.name === 'news_articles'
@@ -68,7 +70,7 @@ async function storeArticles(articles) {
   if (!alreadyExists) {
     await qdrant.createCollection('news_articles', {
       vectors: {
-        size: 768, // or 384 if you're using a small model
+        size: 768,
         distance: 'Cosine',
       },
     });
@@ -104,8 +106,7 @@ async function storeArticles(articles) {
   }
 }
 
-(async () => {
-  const articles = await fetchNewsArticles();
-  console.log(articles);
-  await storeArticles(articles);
-})();
+// Optional direct runner for local use
+if (import.meta.url === `file://${process.argv[1]}`) {
+  ingestNewsArticles();
+}

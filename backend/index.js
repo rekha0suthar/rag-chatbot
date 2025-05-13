@@ -7,6 +7,7 @@ import {
   getSession,
 } from './controllers/session.js';
 import { chat } from './controllers/chat.js';
+import { ingestNewsArticles } from './fetchNews.js';
 
 dotenv.config();
 
@@ -19,6 +20,16 @@ app.use(express.json());
 app.post('/session', createSession);
 app.post('/session/clear', clearSession);
 app.get('/session/:id', getSession);
+
+app.get('/ingest-news', async (req, res) => {
+  try {
+    await ingestNewsArticles();
+    res.send('✅ News ingestion complete.');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('❌ Ingestion failed.');
+  }
+});
 
 // chat route
 app.post('/chat', chat);

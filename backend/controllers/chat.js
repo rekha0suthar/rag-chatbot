@@ -2,6 +2,7 @@ import { getRelevantContext } from '../utils/index.js';
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { VertexAI } from '@google-cloud/vertexai';
 
 dotenv.config();
 
@@ -12,16 +13,21 @@ export const chat = async (req, res) => {
   try {
     const { sessionId, userMessage } = req.body;
     const history = JSON.parse((await redis.get(sessionId)) || '[]');
-    const context = await getRelevantContext(userMessage);
+    const context = 'Context from vector DB (Qdrant) goes here...'; // Replace with your real context logic
+    const prompt = `Use the following context to answer the user's question:\n\n${context}\n\nUser: ${userMessage}`;
 
-    const prompt = `Use the following context to answer the user's question.\n\nContext:\n${context}\n\nUser: ${userMessage}`;
-
-    const model = genAI.getGenerativeModel({
-      model: 'models/gemini-1.5-flash',
+    const vertex_ai = new VertexAI({
+      project: '105892957073579483079', // ✅ update this!
+      location: 'us-central1',
     });
-    const result = await model.generateContent(prompt);
-    const botReply = result.response.text();
 
+    const model = vertex_ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    });
+
+    const botReply = result.response.candidates[0].content.parts[0].text;
     const updatedHistory = [
       ...history,
       { role: 'user', message: userMessage },

@@ -8,11 +8,22 @@ import {
 } from './controllers/session.js';
 import { chat } from './controllers/chat.js';
 import { ingestNewsArticles } from './fetchNews.js';
+import fs from 'fs';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Decode and write service account if running in cloud
+if (process.env.GOOGLE_CREDENTIALS_B64) {
+  const path = '/tmp/service-account.json';
+  fs.writeFileSync(
+    path,
+    Buffer.from(process.env.GOOGLE_CREDENTIALS_B64, 'base64').toString()
+  );
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = path;
+}
 
 app.use(cors());
 app.use(express.json());

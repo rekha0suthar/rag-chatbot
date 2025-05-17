@@ -4,6 +4,13 @@ A full-stack chatbot that answers queries over recent news using Retrieval-Augme
 
 ---
 
+### Demo Video
+Link - https://drive.google.com/file/d/1Z2yCFecZvgwIIs2IYPhgSNtRgxY3Yt2k/view?usp=drive_link
+
+![UI-overview](https://github.com/user-attachments/assets/21c163da-3f1c-4c44-86b6-0aee09470e15)
+
+---
+
 ### Features
 
 - RAG pipeline with top-k context retrieval
